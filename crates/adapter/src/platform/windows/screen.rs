@@ -8,7 +8,7 @@ impl ScreenProvider for WindowsScreenProvider {
     fn screen_info(&self) -> Result<ScreenInfo> {
         #[cfg(target_os = "windows")]
         {
-            use windows::Win32::Graphics::Gdi::{GetDC, GetDeviceCaps, LOGPIXELSX};
+            use windows::Win32::Graphics::Gdi::{GetDC, GetDeviceCaps, ReleaseDC, LOGPIXELSX};
             use windows::Win32::UI::WindowsAndMessaging::{
                 GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN,
             };
@@ -23,9 +23,13 @@ impl ScreenProvider for WindowsScreenProvider {
                     ));
                 }
 
-                let dpi = match GetDC(None) {
-                    Some(hdc) => GetDeviceCaps(Some(hdc), LOGPIXELSX) as f32,
-                    None => 96.0,
+                let hdc = GetDC(None);
+                let dpi = if hdc.is_invalid() {
+                    96.0
+                } else {
+                    let dpi = GetDeviceCaps(Some(hdc), LOGPIXELSX) as f32;
+                    ReleaseDC(None, hdc);
+                    dpi
                 };
 
                 let scale_factor = dpi / 96.0;
