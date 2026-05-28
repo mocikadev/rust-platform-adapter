@@ -65,6 +65,24 @@ macro_rules! platform {
     };
 }
 
+// ========== 运行时能力检测 ==========
+
+/// 检测当前环境是否有可用的图形显示（有头环境）
+///
+/// - Linux: 检查 `DISPLAY` 环境变量
+/// - Windows/macOS: 始终返回 `true`（有虚拟桌面/显示器）
+/// - 移动平台: 始终返回 `true`
+pub fn has_display() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::env::var("DISPLAY").is_ok()
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        true
+    }
+}
+
 // ========== 系统类型判断（编译时常量） ==========
 
 /// 获取当前操作系统类型（编译时确定）

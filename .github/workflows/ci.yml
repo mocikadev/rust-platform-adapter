@@ -67,6 +67,11 @@ jobs:
       - name: Run tests
         run: cargo test
 
+      - name: Run examples
+        run: |
+          cargo run --example platform_info
+          cargo run --example path_demo
+
   check:
     name: Check
     runs-on: ${{ matrix.runner }}

@@ -34,15 +34,25 @@ fn main() {
     // 这里用 block_on 演示，实际应使用 .await
     let rt = tokio::runtime::Runtime::new().unwrap();
 
-    let data = rt.block_on(data_dir_async()).unwrap();
-    println!("async data_dir: {}", data.display());
+    match rt.block_on(data_dir_async()) {
+        Ok(data) => println!("async data_dir: {}", data.display()),
+        Err(e) => println!("async data_dir: 错误 - {}", e),
+    }
 
-    let cache = rt.block_on(cache_dir_async()).unwrap();
-    println!("async cache_dir: {}", cache.display());
+    match rt.block_on(cache_dir_async()) {
+        Ok(cache) => println!("async cache_dir: {}", cache.display()),
+        Err(e) => println!("async cache_dir: 错误 - {}", e),
+    }
 
-    let screen = rt.block_on(screen_info_async()).unwrap();
-    println!(
-        "async screen: {}x{}, scale={:.1}",
-        screen.width, screen.height, screen.scale_factor
-    );
+    // 屏幕信息在有头环境下才可用
+    if has_display() {
+        if let Ok(screen) = rt.block_on(screen_info_async()) {
+            println!(
+                "async screen: {}x{}, scale={:.1}",
+                screen.width, screen.height, screen.scale_factor
+            );
+        }
+    } else {
+        println!("(无头环境，跳过异步屏幕信息获取)");
+    }
 }
