@@ -19,19 +19,43 @@ fn test_current_os() {
 
 #[test]
 fn test_os_type_methods() {
-    let os = current_os();
-    #[cfg(target_os = "linux")]
-    assert!(os.is_linux());
-    #[cfg(target_os = "windows")]
-    assert!(os.is_windows());
-    #[cfg(target_os = "macos")]
-    assert!(os.is_macos());
-    #[cfg(target_os = "android")]
-    assert!(os.is_android());
-    #[cfg(target_os = "ios")]
-    assert!(os.is_ios());
-    #[cfg(target_os = "ohos")]
-    assert!(os.is_ohos());
+    // 编译时常量方法验证
+    assert!(OsType::Android.is_android());
+    assert!(OsType::Ios.is_ios());
+    assert!(OsType::Ohos.is_ohos());
+    assert!(OsType::Windows.is_windows());
+    assert!(OsType::Linux.is_linux());
+    assert!(OsType::MacOS.is_macos());
+
+    // is_mobile / is_desktop
+    assert!(OsType::Android.is_mobile());
+    assert!(OsType::Ios.is_mobile());
+    assert!(!OsType::Ohos.is_mobile()); // ohos 不在 mobile 判断中
+    assert!(!OsType::Linux.is_mobile());
+
+    assert!(OsType::Windows.is_desktop());
+    assert!(OsType::Linux.is_desktop());
+    assert!(OsType::MacOS.is_desktop());
+    assert!(!OsType::Ohos.is_desktop()); // ohos 不在 desktop 判断中
+    assert!(!OsType::Android.is_desktop());
+}
+
+#[test]
+fn test_device_form_methods() {
+    // is_mobile 包含 Phone + Tablet
+    assert!(DeviceForm::Phone.is_mobile());
+    assert!(DeviceForm::Tablet.is_mobile());
+    assert!(!DeviceForm::Desktop.is_mobile());
+    assert!(!DeviceForm::Tv.is_mobile());
+
+    // 各 is_xxx 方法
+    assert!(DeviceForm::Phone.is_phone());
+    assert!(DeviceForm::Tablet.is_tablet());
+    assert!(DeviceForm::Desktop.is_desktop());
+    assert!(DeviceForm::Tv.is_tv());
+    assert!(DeviceForm::Car.is_car());
+    assert!(DeviceForm::Wearable.is_wearable());
+    assert!(DeviceForm::IoT.is_iot());
 }
 
 #[test]
@@ -54,7 +78,14 @@ fn test_platform_info() {
 
     let info = info.unwrap();
     assert_eq!(info.os_type, current_os());
-    assert!(!info.os_version.is_empty(), "os_version should not be empty");
+    assert!(
+        !info.os_version.is_empty(),
+        "os_version should not be empty"
+    );
+    assert!(
+        !info.device_model.is_empty(),
+        "device_model should not be empty"
+    );
 }
 
 #[test]
@@ -95,33 +126,73 @@ fn test_document_dir() {
 
 #[test]
 fn test_screen_info() {
-    let screen = screen_info();
-    assert!(screen.is_ok(), "screen_info should succeed");
-
-    let screen = screen.unwrap();
-    assert!(screen.width > 0, "screen width should be > 0");
-    assert!(screen.height > 0, "screen height should be > 0");
-    assert!(screen.dpi > 0.0, "screen dpi should be > 0");
-    assert!(screen.scale_factor > 0.0, "scale_factor should be > 0");
+    // Linux 无头环境可能返回 NotSupported
+    #[cfg(target_os = "linux")]
+    {
+        let screen = screen_info();
+        if std::env::var("DISPLAY").is_ok() {
+            let screen = screen.expect("screen_info should succeed with DISPLAY");
+            assert!(screen.width > 0, "screen width should be > 0");
+            assert!(screen.height > 0, "screen height should be > 0");
+            assert!(screen.dpi > 0.0, "screen dpi should be > 0");
+            assert!(screen.scale_factor > 0.0, "scale_factor should be > 0");
+        }
+        // 无头环境跳过
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let screen = screen_info().expect("screen_info should succeed");
+        assert!(screen.width > 0, "screen width should be > 0");
+        assert!(screen.height > 0, "screen height should be > 0");
+        assert!(screen.dpi > 0.0, "screen dpi should be > 0");
+        assert!(screen.scale_factor > 0.0, "scale_factor should be > 0");
+        assert!(screen.scale_factor <= 4.0, "scale_factor should be <= 4");
+    }
 }
 
 #[test]
 fn test_screen_width_height() {
-    let width = screen_width();
-    let height = screen_height();
-    assert!(width.is_ok(), "screen_width should succeed");
-    assert!(height.is_ok(), "screen_height should succeed");
+    #[cfg(target_os = "linux")]
+    {
+        if std::env::var("DISPLAY").is_ok() {
+            let width = screen_width().expect("screen_width should succeed");
+            let height = screen_height().expect("screen_height should succeed");
+            assert!(width > 0);
+            assert!(height > 0);
+        }
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let width = screen_width().expect("screen_width should succeed");
+        let height = screen_height().expect("screen_height should succeed");
+        assert!(width > 0);
+        assert!(height > 0);
+    }
+}
 
-    let width = width.unwrap();
-    let height = height.unwrap();
-    assert!(width > 0, "screen width should be > 0");
-    assert!(height > 0, "screen height should be > 0");
+#[test]
+fn test_screen_orientation() {
+    #[cfg(target_os = "linux")]
+    {
+        if std::env::var("DISPLAY").is_ok() {
+            let orient = orientation().expect("orientation should succeed");
+            match orient {
+                Orientation::Portrait | Orientation::Landscape | Orientation::Unknown => {}
+            }
+        }
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let orient = orientation().expect("orientation should succeed");
+        match orient {
+            Orientation::Portrait | Orientation::Landscape | Orientation::Unknown => {}
+        }
+    }
 }
 
 #[test]
 fn test_device_form() {
     let form = device_form();
-    // 无法断言具体值，只验证不 panic
     match form {
         DeviceForm::Phone
         | DeviceForm::Tablet
@@ -135,9 +206,8 @@ fn test_device_form() {
 }
 
 #[test]
-fn test_device_form_methods() {
+fn test_device_form_all_methods() {
     let form = device_form();
-    // 验证所有方法可用
     let _ = form.is_phone();
     let _ = form.is_tablet();
     let _ = form.is_desktop();
@@ -150,6 +220,61 @@ fn test_device_form_methods() {
 
 #[test]
 fn test_convenience_functions() {
-    // 验证所有便捷函数可用
     assert!(is_android() || is_ios() || is_ohos() || is_windows() || is_linux() || is_macos());
+}
+
+#[test]
+fn test_current_os_constant() {
+    assert_eq!(CURRENT_OS, current_os());
+}
+
+#[test]
+fn test_current_arch_constant() {
+    assert_eq!(CURRENT_ARCH, CpuArch::current());
+}
+
+#[test]
+fn test_os_type_current() {
+    let os = OsType::current();
+    assert_eq!(os, current_os());
+}
+
+#[test]
+fn test_device_model_not_empty() {
+    let model = device_model();
+    assert!(model.is_ok(), "device_model should succeed");
+    let model = model.unwrap();
+    assert!(!model.is_empty(), "device_model should not be empty");
+}
+
+#[test]
+fn test_os_version_not_empty() {
+    let version = os_version();
+    assert!(version.is_ok(), "os_version should succeed");
+    let version = version.unwrap();
+    assert!(!version.is_empty(), "os_version should not be empty");
+}
+
+#[test]
+fn test_external_data_dir() {
+    let dir = external_data_dir();
+    assert!(dir.is_ok(), "external_data_dir should succeed");
+
+    let dir = dir.unwrap();
+    assert!(
+        dir.is_absolute(),
+        "external_data_dir should be absolute path"
+    );
+}
+
+#[test]
+fn test_external_cache_dir() {
+    let dir = external_cache_dir();
+    assert!(dir.is_ok(), "external_cache_dir should succeed");
+
+    let dir = dir.unwrap();
+    assert!(
+        dir.is_absolute(),
+        "external_cache_dir should be absolute path"
+    );
 }

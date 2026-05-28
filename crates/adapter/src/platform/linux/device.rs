@@ -34,7 +34,7 @@ impl DeviceInfo for LinuxDeviceInfo {
                 System::host_name()
                     .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "hostname"))
             })
-            .map_err(|e| crate::error::PlatformError::IoError(e))
+            .map_err(crate::error::PlatformError::IoError)
     }
 
     fn cpu_arch(&self) -> CpuArch {

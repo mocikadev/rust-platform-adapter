@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use crate::error::Result;
 use crate::traits::{DeviceInfo, PathProvider, ScreenProvider};
-use crate::types::{CpuArch, DeviceForm, Orientation, OsType, PlatformInfo, ScreenInfo, CURRENT_OS};
+use crate::types::{
+    CpuArch, DeviceForm, Orientation, OsType, PlatformInfo, ScreenInfo, CURRENT_OS,
+};
 
 // ========== 系统类型判断（编译时常量） ==========
 
@@ -88,6 +90,16 @@ pub fn temp_dir() -> Result<PathBuf> {
 /// 获取文档目录
 pub fn document_dir() -> Result<PathBuf> {
     crate::platform::path_provider().document_dir()
+}
+
+/// 获取外部存储应用数据目录
+pub fn external_data_dir() -> Result<PathBuf> {
+    crate::platform::path_provider().external_data_dir()
+}
+
+/// 获取外部存储缓存目录
+pub fn external_cache_dir() -> Result<PathBuf> {
+    crate::platform::path_provider().external_cache_dir()
 }
 
 // ========== 屏幕相关 ==========

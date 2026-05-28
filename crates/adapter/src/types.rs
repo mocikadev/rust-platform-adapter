@@ -14,17 +14,29 @@ impl OsType {
     /// 获取当前编译目标的操作系统类型（编译时常量）
     pub const fn current() -> Self {
         #[cfg(target_os = "android")]
-        { OsType::Android }
+        {
+            OsType::Android
+        }
         #[cfg(target_os = "ios")]
-        { OsType::Ios }
+        {
+            OsType::Ios
+        }
         #[cfg(target_os = "ohos")]
-        { OsType::Ohos }
+        {
+            OsType::Ohos
+        }
         #[cfg(target_os = "windows")]
-        { OsType::Windows }
+        {
+            OsType::Windows
+        }
         #[cfg(target_os = "linux")]
-        { OsType::Linux }
+        {
+            OsType::Linux
+        }
         #[cfg(target_os = "macos")]
-        { OsType::MacOS }
+        {
+            OsType::MacOS
+        }
         #[cfg(not(any(
             target_os = "android",
             target_os = "ios",
@@ -33,15 +45,29 @@ impl OsType {
             target_os = "linux",
             target_os = "macos"
         )))]
-        { compile_error!("Unsupported target OS") }
+        {
+            compile_error!("Unsupported target OS")
+        }
     }
 
-    pub const fn is_android(&self) -> bool { matches!(self, OsType::Android) }
-    pub const fn is_ios(&self) -> bool { matches!(self, OsType::Ios) }
-    pub const fn is_ohos(&self) -> bool { matches!(self, OsType::Ohos) }
-    pub const fn is_windows(&self) -> bool { matches!(self, OsType::Windows) }
-    pub const fn is_linux(&self) -> bool { matches!(self, OsType::Linux) }
-    pub const fn is_macos(&self) -> bool { matches!(self, OsType::MacOS) }
+    pub const fn is_android(&self) -> bool {
+        matches!(self, OsType::Android)
+    }
+    pub const fn is_ios(&self) -> bool {
+        matches!(self, OsType::Ios)
+    }
+    pub const fn is_ohos(&self) -> bool {
+        matches!(self, OsType::Ohos)
+    }
+    pub const fn is_windows(&self) -> bool {
+        matches!(self, OsType::Windows)
+    }
+    pub const fn is_linux(&self) -> bool {
+        matches!(self, OsType::Linux)
+    }
+    pub const fn is_macos(&self) -> bool {
+        matches!(self, OsType::MacOS)
+    }
 
     /// 是否为移动端（Android / iOS）
     /// 注意：OpenHarmony 支持多种设备形态，不在此判断
@@ -76,13 +102,27 @@ impl DeviceForm {
         crate::platform::device_provider().device_form()
     }
 
-    pub const fn is_phone(&self) -> bool { matches!(self, DeviceForm::Phone) }
-    pub const fn is_tablet(&self) -> bool { matches!(self, DeviceForm::Tablet) }
-    pub const fn is_desktop(&self) -> bool { matches!(self, DeviceForm::Desktop) }
-    pub const fn is_tv(&self) -> bool { matches!(self, DeviceForm::Tv) }
-    pub const fn is_car(&self) -> bool { matches!(self, DeviceForm::Car) }
-    pub const fn is_wearable(&self) -> bool { matches!(self, DeviceForm::Wearable) }
-    pub const fn is_iot(&self) -> bool { matches!(self, DeviceForm::IoT) }
+    pub const fn is_phone(&self) -> bool {
+        matches!(self, DeviceForm::Phone)
+    }
+    pub const fn is_tablet(&self) -> bool {
+        matches!(self, DeviceForm::Tablet)
+    }
+    pub const fn is_desktop(&self) -> bool {
+        matches!(self, DeviceForm::Desktop)
+    }
+    pub const fn is_tv(&self) -> bool {
+        matches!(self, DeviceForm::Tv)
+    }
+    pub const fn is_car(&self) -> bool {
+        matches!(self, DeviceForm::Car)
+    }
+    pub const fn is_wearable(&self) -> bool {
+        matches!(self, DeviceForm::Wearable)
+    }
+    pub const fn is_iot(&self) -> bool {
+        matches!(self, DeviceForm::IoT)
+    }
 
     /// 是否为移动端（手机/平板）
     pub const fn is_mobile(&self) -> bool {
@@ -104,20 +144,30 @@ impl CpuArch {
     /// 获取当前编译目标的 CPU 架构（编译时常量）
     pub const fn current() -> Self {
         #[cfg(target_arch = "x86")]
-        { CpuArch::X86 }
+        {
+            CpuArch::X86
+        }
         #[cfg(target_arch = "x86_64")]
-        { CpuArch::X86_64 }
+        {
+            CpuArch::X86_64
+        }
         #[cfg(target_arch = "arm")]
-        { CpuArch::Arm }
+        {
+            CpuArch::Arm
+        }
         #[cfg(target_arch = "aarch64")]
-        { CpuArch::Arm64 }
+        {
+            CpuArch::Arm64
+        }
         #[cfg(not(any(
             target_arch = "x86",
             target_arch = "x86_64",
             target_arch = "arm",
             target_arch = "aarch64"
         )))]
-        { CpuArch::Unknown }
+        {
+            CpuArch::Unknown
+        }
     }
 }
 

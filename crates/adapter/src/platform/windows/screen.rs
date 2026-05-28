@@ -6,15 +6,45 @@ pub struct WindowsScreenProvider;
 
 impl ScreenProvider for WindowsScreenProvider {
     fn screen_info(&self) -> Result<ScreenInfo> {
-        // Windows 屏幕信息获取需要 Win32 API
-        // v1.0 先返回默认值，后续可通过 winapi crate 实现
-        Ok(ScreenInfo {
-            width: 1920,
-            height: 1080,
-            dpi: 96.0,
-            scale_factor: 1.0,
-            orientation: Orientation::Landscape,
-        })
+        #[cfg(target_os = "windows")]
+        {
+            use windows::Win32::Graphics::Gdi::{GetDC, GetDeviceCaps, LOGPIXELSX};
+            use windows::Win32::UI::WindowsAndMessaging::{
+                GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN,
+            };
+
+            unsafe {
+                let width = GetSystemMetrics(SM_CXSCREEN) as u32;
+                let height = GetSystemMetrics(SM_CYSCREEN) as u32;
+
+                let hdc = GetDC(None);
+                let dpi = if hdc.is_invalid() {
+                    96.0 // 默认 DPI
+                } else {
+                    GetDeviceCaps(hdc, LOGPIXELSX) as f32
+                };
+
+                let scale_factor = dpi / 96.0;
+
+                let orientation = if width >= height {
+                    Orientation::Landscape
+                } else {
+                    Orientation::Portrait
+                };
+
+                Ok(ScreenInfo {
+                    width,
+                    height,
+                    dpi,
+                    scale_factor,
+                    orientation,
+                })
+            }
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            Err(crate::error::PlatformError::NotSupported)
+        }
     }
 
     fn screen_width(&self) -> Result<u32> {

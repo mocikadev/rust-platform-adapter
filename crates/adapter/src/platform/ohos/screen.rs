@@ -17,11 +17,21 @@ impl ScreenProvider for OhosScreenProvider {
             const DISPLAY_MANAGER_LANDSCAPE: i32 = 1;
 
             extern "C" {
-                fn OH_NativeDisplayManager_GetDefaultDisplayWidth(width: *mut i32) -> NativeDisplayManager_ErrorCode;
-                fn OH_NativeDisplayManager_GetDefaultDisplayHeight(height: *mut i32) -> NativeDisplayManager_ErrorCode;
-                fn OH_NativeDisplayManager_GetDefaultDisplayDensityDpi(dpi: *mut i32) -> NativeDisplayManager_ErrorCode;
-                fn OH_NativeDisplayManager_GetDefaultDisplayVirtualPixelRatio(vpr: *mut f32) -> NativeDisplayManager_ErrorCode;
-                fn OH_NativeDisplayManager_GetDefaultDisplayOrientation(orientation: *mut i32) -> NativeDisplayManager_ErrorCode;
+                fn OH_NativeDisplayManager_GetDefaultDisplayWidth(
+                    width: *mut i32,
+                ) -> NativeDisplayManager_ErrorCode;
+                fn OH_NativeDisplayManager_GetDefaultDisplayHeight(
+                    height: *mut i32,
+                ) -> NativeDisplayManager_ErrorCode;
+                fn OH_NativeDisplayManager_GetDefaultDisplayDensityDpi(
+                    dpi: *mut i32,
+                ) -> NativeDisplayManager_ErrorCode;
+                fn OH_NativeDisplayManager_GetDefaultDisplayVirtualPixelRatio(
+                    vpr: *mut f32,
+                ) -> NativeDisplayManager_ErrorCode;
+                fn OH_NativeDisplayManager_GetDefaultDisplayOrientation(
+                    orientation: *mut i32,
+                ) -> NativeDisplayManager_ErrorCode;
             }
 
             let mut width: i32 = 0;
@@ -58,7 +68,9 @@ impl ScreenProvider for OhosScreenProvider {
                     });
                 }
             }
-            Err(crate::error::PlatformError::FfiError("Failed to get display info".to_string()))
+            Err(crate::error::PlatformError::FfiError(
+                "Failed to get display info".to_string(),
+            ))
         }
         #[cfg(not(target_os = "ohos"))]
         {

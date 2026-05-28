@@ -35,7 +35,9 @@ impl DeviceInfo for OhosDeviceInfo {
                     return Ok(c_str.to_string_lossy().to_string());
                 }
             }
-            Err(crate::error::PlatformError::FfiError("Failed to get OS version".to_string()))
+            Err(crate::error::PlatformError::FfiError(
+                "Failed to get OS version".to_string(),
+            ))
         }
         #[cfg(not(target_os = "ohos"))]
         {
@@ -58,7 +60,9 @@ impl DeviceInfo for OhosDeviceInfo {
                     return Ok(c_str.to_string_lossy().to_string());
                 }
             }
-            Err(crate::error::PlatformError::FfiError("Failed to get device model".to_string()))
+            Err(crate::error::PlatformError::FfiError(
+                "Failed to get device model".to_string(),
+            ))
         }
         #[cfg(not(target_os = "ohos"))]
         {

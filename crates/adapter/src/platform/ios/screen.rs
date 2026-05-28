@@ -6,10 +6,10 @@ pub struct IosScreenProvider;
 
 impl ScreenProvider for IosScreenProvider {
     fn screen_info(&self) -> Result<ScreenInfo> {
-        // iOS 使用 UIScreen 获取屏幕信息
         #[cfg(target_os = "ios")]
         {
-            use objc2_ui_kit::{UIApplication, UIScreen};
+            use objc2_ui_kit::{UIApplication, UIDevice, UIScreen};
+
             let screen = unsafe { UIScreen::mainScreen() };
             let bounds = unsafe { screen.bounds() };
             let scale = unsafe { screen.scale() };
@@ -22,18 +22,29 @@ impl ScreenProvider for IosScreenProvider {
                 let app = UIApplication::sharedApplication();
                 let status_bar_orientation = app.statusBarOrientation();
                 match status_bar_orientation {
-                    1 => Orientation::Portrait,       // UIInterfaceOrientationPortrait
-                    2 => Orientation::Portrait,       // UIInterfaceOrientationPortraitUpsideDown
-                    3 => Orientation::Landscape,      // UIInterfaceOrientationLandscapeLeft
-                    4 => Orientation::Landscape,      // UIInterfaceOrientationLandscapeRight
+                    1 => Orientation::Portrait,  // UIInterfaceOrientationPortrait
+                    2 => Orientation::Portrait,  // UIInterfaceOrientationPortraitUpsideDown
+                    3 => Orientation::Landscape, // UIInterfaceOrientationLandscapeLeft
+                    4 => Orientation::Landscape, // UIInterfaceOrientationLandscapeRight
                     _ => Orientation::Unknown,
+                }
+            };
+
+            // 根据 userInterfaceIdiom 区分设备类型使用不同基准 PPI
+            let base_ppi = unsafe {
+                let device = UIDevice::currentDevice();
+                let idiom = device.userInterfaceIdiom();
+                match idiom {
+                    0 => 163.0, // UIUserInterfaceIdiomPhone
+                    1 => 132.0, // UIUserInterfaceIdiomPad
+                    _ => 163.0, // 默认使用 iPhone 基准值
                 }
             };
 
             Ok(ScreenInfo {
                 width,
                 height,
-                dpi: (scale * 163.0) as f32,
+                dpi: (scale * base_ppi) as f32,
                 scale_factor: scale as f32,
                 orientation,
             })

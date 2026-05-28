@@ -25,7 +25,10 @@ impl DeviceInfo for AndroidDeviceInfo {
         {
             // 使用 libc 的 __system_property_get 获取 ro.build.version.release
             extern "C" {
-                fn __system_property_get(name: *const std::ffi::c_char, value: *mut std::ffi::c_char) -> i32;
+                fn __system_property_get(
+                    name: *const std::ffi::c_char,
+                    value: *mut std::ffi::c_char,
+                ) -> i32;
                 fn android_get_device_api_level() -> i32;
             }
 
@@ -54,7 +57,10 @@ impl DeviceInfo for AndroidDeviceInfo {
         #[cfg(target_os = "android")]
         {
             extern "C" {
-                fn __system_property_get(name: *const std::ffi::c_char, value: *mut std::ffi::c_char) -> i32;
+                fn __system_property_get(
+                    name: *const std::ffi::c_char,
+                    value: *mut std::ffi::c_char,
+                ) -> i32;
             }
 
             let mut buf = [0u8; 256];
@@ -67,7 +73,9 @@ impl DeviceInfo for AndroidDeviceInfo {
                     return Ok(String::from_utf8_lossy(&buf[..len as usize]).to_string());
                 }
             }
-            Err(crate::error::PlatformError::FfiError("Failed to get device model".to_string()))
+            Err(crate::error::PlatformError::FfiError(
+                "Failed to get device model".to_string(),
+            ))
         }
         #[cfg(not(target_os = "android"))]
         {

@@ -73,4 +73,12 @@ impl PathProvider for IosPathProvider {
         // iOS: ~/Documents (与 data_dir 相同)
         self.data_dir()
     }
+
+    fn external_data_dir(&self) -> Result<PathBuf> {
+        self.data_dir()
+    }
+
+    fn external_cache_dir(&self) -> Result<PathBuf> {
+        self.cache_dir()
+    }
 }

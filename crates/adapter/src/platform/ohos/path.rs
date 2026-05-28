@@ -35,7 +35,9 @@ impl PathProvider for OhosPathProvider {
                     return Ok(PathBuf::from(path.to_string()));
                 }
             }
-            Err(crate::error::PlatformError::FfiError("Failed to get files dir".to_string()))
+            Err(crate::error::PlatformError::FfiError(
+                "Failed to get files dir".to_string(),
+            ))
         }
         #[cfg(not(target_os = "ohos"))]
         {
@@ -71,7 +73,9 @@ impl PathProvider for OhosPathProvider {
                     return Ok(PathBuf::from(path.to_string()));
                 }
             }
-            Err(crate::error::PlatformError::FfiError("Failed to get cache dir".to_string()))
+            Err(crate::error::PlatformError::FfiError(
+                "Failed to get cache dir".to_string(),
+            ))
         }
         #[cfg(not(target_os = "ohos"))]
         {
@@ -119,5 +123,15 @@ impl PathProvider for OhosPathProvider {
     fn document_dir(&self) -> Result<PathBuf> {
         // OpenHarmony: filesDir + "/documents"
         Ok(self.data_dir()?.join("documents"))
+    }
+
+    fn external_data_dir(&self) -> Result<PathBuf> {
+        // OpenHarmony 无外部存储概念，返回与内部路径相同
+        self.data_dir()
+    }
+
+    fn external_cache_dir(&self) -> Result<PathBuf> {
+        // OpenHarmony 无外部存储概念，返回与内部路径相同
+        self.cache_dir()
     }
 }

@@ -1,17 +1,20 @@
 # rust-platform-adapter
 
+[![CI](https://github.com/mocikadev/rust-platform-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/mocikadev/rust-platform-adapter/actions/workflows/ci.yml)
+[![Build](https://github.com/mocikadev/rust-platform-adapter/actions/workflows/build.yml/badge.svg)](https://github.com/mocikadev/rust-platform-adapter/actions/workflows/build.yml)
+
 Rust 跨平台适配层，统一接口调用各平台 Native API，实现零开销抽象。
 
 ## 支持平台
 
 | 平台 | 系统标识 | 实现方式 |
 |------|----------|----------|
-| Android | `target_os = "android"` | NDK (ndk crate) |
-| iOS | `target_os = "ios"` | objc2 |
+| Android | `target_os = "android"` | NDK (ndk crate) + /proc/self/cmdline |
+| iOS | `target_os = "ios"` | objc2-ui-kit / objc2-foundation |
 | OpenHarmony | `target_os = "ohos"` | NDK C API |
-| Windows | `target_os = "windows"` | dirs + sysinfo |
-| Linux | `target_os = "linux"` | dirs + sysinfo |
-| macOS | `target_os = "macos"` | dirs + sysinfo |
+| Windows | `target_os = "windows"` | dirs + sysinfo + windows crate |
+| Linux | `target_os = "linux"` | dirs + sysinfo + x11rb (X11 RandR) |
+| macOS | `target_os = "macos"` | dirs + sysinfo + objc2-app-kit + libc |
 
 ## 快速开始
 
@@ -96,10 +99,12 @@ fn main() -> Result<()> {
 
 | 函数 | 说明 |
 |------|------|
-| `data_dir()` | 应用数据目录 |
-| `cache_dir()` | 缓存目录 |
+| `data_dir()` | 应用数据目录（内部存储） |
+| `cache_dir()` | 缓存目录（内部存储） |
 | `temp_dir()` | 临时目录 |
 | `document_dir()` | 文档目录 |
+| `external_data_dir()` | 应用数据目录（外部存储） |
+| `external_cache_dir()` | 缓存目录（外部存储） |
 
 ### 屏幕信息
 
@@ -180,6 +185,9 @@ rust-platform-adapter/
 
 - Android: `ndk`
 - iOS/macOS: `objc2`, `objc2-ui-kit`, `objc2-app-kit`, `objc2-foundation`
+- macOS: `libc` (sysctl)
+- Windows: `windows` crate (Win32 API)
+- Linux: `x11rb` (X11 RandR，可选 feature `x11`)
 - OpenHarmony: NDK C API（`libdeviceinfo_ndk.z.so`, `libability_runtime.so`, `libnative_display_manager.so`）
 
 ## 许可证

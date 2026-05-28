@@ -62,8 +62,8 @@ impl DeviceInfo for IosDeviceInfo {
             let device = unsafe { UIDevice::currentDevice() };
             let idiom = unsafe { device.userInterfaceIdiom() };
             match idiom {
-                0 => DeviceForm::Phone,   // UIUserInterfaceIdiomPhone
-                1 => DeviceForm::Tablet,  // UIUserInterfaceIdiomPad
+                0 => DeviceForm::Phone,  // UIUserInterfaceIdiomPhone
+                1 => DeviceForm::Tablet, // UIUserInterfaceIdiomPad
                 _ => DeviceForm::Unknown,
             }
         }

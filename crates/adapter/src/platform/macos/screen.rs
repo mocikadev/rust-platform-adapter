@@ -6,16 +6,42 @@ pub struct MacosScreenProvider;
 
 impl ScreenProvider for MacosScreenProvider {
     fn screen_info(&self) -> Result<ScreenInfo> {
-        // macOS 屏幕信息获取需要 AppKit 框架
-        // v1.0 先返回默认值，后续可通过 objc2-app-kit 实现
-        // macOS 默认 DPI 是 72 (Retina 显示器为 144)
-        Ok(ScreenInfo {
-            width: 2560,
-            height: 1600,
-            dpi: 72.0,
-            scale_factor: 2.0,
-            orientation: Orientation::Landscape,
-        })
+        #[cfg(target_os = "macos")]
+        {
+            use objc2_app_kit::NSScreen;
+
+            let screen = unsafe { NSScreen::mainScreen() };
+            let frame = unsafe { screen.frame() };
+            let backing_scale = unsafe { screen.backingScaleFactor() };
+
+            // NSScreen.frame 返回的点坐标（逻辑像素）
+            // 乘以 backingScaleFactor 得到物理像素
+            let scale = backing_scale as f32;
+            let width = (frame.size.width * backing_scale) as u32;
+            let height = (frame.size.height * backing_scale) as u32;
+
+            // macOS 标准 DPI: 72.0 * backingScaleFactor
+            let dpi = 72.0 * scale;
+
+            // macOS 默认横屏（桌面显示器）
+            let orientation = if width >= height {
+                Orientation::Landscape
+            } else {
+                Orientation::Portrait
+            };
+
+            Ok(ScreenInfo {
+                width,
+                height,
+                dpi,
+                scale_factor: scale,
+                orientation,
+            })
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            Err(crate::error::PlatformError::NotSupported)
+        }
     }
 
     fn screen_width(&self) -> Result<u32> {
