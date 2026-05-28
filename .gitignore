@@ -1,0 +1,43 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+.atomcode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+/build/
+/dist/
+
+# Android
+*.apk
+*.aab
+*.dex
+*.class
+*.jks
+*.keystore
+/local.properties
+
+# iOS
+*.ipa
+*.dSYM.zip
+*.dSYM
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+
+# OpenHarmony
+/oh_modules/
+/oh-package-lock.json5
+/.hvigor/
+/.cxx/

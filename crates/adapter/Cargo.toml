@@ -1,0 +1,35 @@
+[package]
+name = "rust-platform-adapter"
+version = "0.1.0"
+edition = "2021"
+description = "Rust 跨平台适配层，统一接口调用各平台 Native API"
+license = "MIT"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("ohos"))'] }
+
+[dependencies]
+thiserror = "2"
+dirs = "6"
+sysinfo = "0.34"
+
+# Android
+[target.'cfg(target_os = "android")'.dependencies]
+ndk = "0.9.0"
+
+# iOS
+[target.'cfg(target_os = "ios")'.dependencies]
+objc2 = "0.6.4"
+objc2-ui-kit = "0.3.2"
+objc2-foundation = "0.3.2"
+
+# macOS
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.4"
+objc2-app-kit = "0.3.2"
+objc2-foundation = "0.3.2"
+
+# OpenHarmony
+[target.'cfg(target_os = "ohos")'.dependencies]
+napi-ohos = "1.2.0"
+napi-derive-ohos = "1.2.0"
