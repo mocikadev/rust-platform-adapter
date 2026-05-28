@@ -63,9 +63,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install cargo-ndk
-        uses: cargo-bins/cargo-binstall@main
-        with:
-          args: cargo-ndk
+        run: cargo install cargo-ndk
 
       - name: Build
         run: cargo ndk -t ${{ matrix.target }} build --release -p rust-platform-adapter --no-default-features
