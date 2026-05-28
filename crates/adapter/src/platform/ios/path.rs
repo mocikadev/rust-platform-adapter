@@ -12,14 +12,13 @@ impl PathProvider for IosPathProvider {
         #[cfg(target_os = "ios")]
         {
             use objc2_foundation::{NSSearchPathDirectory, NSSearchPathDomainMask};
-            let paths = unsafe {
-                objc2_foundation::NSSearchPathForDirectoriesInDomains(
-                    NSSearchPathDirectory::DocumentDirectory,
-                    NSSearchPathDomainMask::UserDomainMask,
-                    true, // expandTilde
-                )
-            };
-            if let Some(path) = paths.first() {
+
+            let paths = objc2_foundation::NSSearchPathForDirectoriesInDomains(
+                NSSearchPathDirectory::DocumentDirectory,
+                NSSearchPathDomainMask::UserDomainMask,
+                true, // expandTilde
+            );
+            if let Some(path) = paths.firstObject() {
                 Ok(PathBuf::from(path.to_string()))
             } else {
                 Err(crate::error::PlatformError::NotSupported)
@@ -36,14 +35,13 @@ impl PathProvider for IosPathProvider {
         #[cfg(target_os = "ios")]
         {
             use objc2_foundation::{NSSearchPathDirectory, NSSearchPathDomainMask};
-            let paths = unsafe {
-                objc2_foundation::NSSearchPathForDirectoriesInDomains(
-                    NSSearchPathDirectory::CachesDirectory,
-                    NSSearchPathDomainMask::UserDomainMask,
-                    true,
-                )
-            };
-            if let Some(path) = paths.first() {
+
+            let paths = objc2_foundation::NSSearchPathForDirectoriesInDomains(
+                NSSearchPathDirectory::CachesDirectory,
+                NSSearchPathDomainMask::UserDomainMask,
+                true,
+            );
+            if let Some(path) = paths.firstObject() {
                 Ok(PathBuf::from(path.to_string()))
             } else {
                 Err(crate::error::PlatformError::NotSupported)
@@ -60,7 +58,7 @@ impl PathProvider for IosPathProvider {
         #[cfg(target_os = "ios")]
         {
             use objc2_foundation::NSTemporaryDirectory;
-            let temp = unsafe { NSTemporaryDirectory() };
+            let temp = NSTemporaryDirectory();
             Ok(PathBuf::from(temp.to_string()))
         }
         #[cfg(not(target_os = "ios"))]

@@ -20,13 +20,20 @@ ndk = "0.9.0"
 # iOS
 [target.'cfg(target_os = "ios")'.dependencies]
 objc2 = "0.6.4"
-objc2-ui-kit = "0.3.2"
-objc2-foundation = "0.3.2"
+objc2-ui-kit = { version = "0.3.2", features = [
+    "UIDevice",
+    "UIScreen",
+    "UIApplication",
+    "UIOrientation",
+    "objc2-core-foundation",
+] }
+objc2-foundation = { version = "0.3.2", features = ["NSArray", "NSString"] }
+objc2-core-foundation = "0.3.2"
 
 # macOS
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6.4"
-objc2-app-kit = "0.3.2"
+objc2-app-kit = { version = "0.3.2", features = ["NSScreen"] }
 objc2-foundation = "0.3.2"
 libc = "0.2"
 

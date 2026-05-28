@@ -23,11 +23,9 @@ impl ScreenProvider for WindowsScreenProvider {
                     ));
                 }
 
-                let hdc = GetDC(None);
-                let dpi = if hdc.is_invalid() {
-                    96.0
-                } else {
-                    GetDeviceCaps(hdc, LOGPIXELSX) as f32
+                let dpi = match GetDC(None) {
+                    Some(hdc) => GetDeviceCaps(Some(hdc), LOGPIXELSX) as f32,
+                    None => 96.0,
                 };
 
                 let scale_factor = dpi / 96.0;

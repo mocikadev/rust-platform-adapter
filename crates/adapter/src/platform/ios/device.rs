@@ -20,13 +20,16 @@ impl DeviceInfo for IosDeviceInfo {
     }
 
     fn os_version(&self) -> Result<String> {
-        // iOS 使用 objc2 获取系统版本
-        // 需要 objc2-ui-kit 和 objc2-foundation
         #[cfg(target_os = "ios")]
         {
+            use objc2::MainThreadMarker;
             use objc2_ui_kit::UIDevice;
-            let device = unsafe { UIDevice::currentDevice() };
-            let version = unsafe { device.systemVersion() };
+
+            let mtm = MainThreadMarker::new().ok_or_else(|| {
+                crate::error::PlatformError::FfiError("Not on main thread".to_string())
+            })?;
+            let device = UIDevice::currentDevice(mtm);
+            let version = device.systemVersion();
             Ok(version.to_string())
         }
         #[cfg(not(target_os = "ios"))]
@@ -36,12 +39,16 @@ impl DeviceInfo for IosDeviceInfo {
     }
 
     fn device_model(&self) -> Result<String> {
-        // iOS 设备型号
         #[cfg(target_os = "ios")]
         {
+            use objc2::MainThreadMarker;
             use objc2_ui_kit::UIDevice;
-            let device = unsafe { UIDevice::currentDevice() };
-            let model = unsafe { device.model() };
+
+            let mtm = MainThreadMarker::new().ok_or_else(|| {
+                crate::error::PlatformError::FfiError("Not on main thread".to_string())
+            })?;
+            let device = UIDevice::currentDevice(mtm);
+            let model = device.model();
             Ok(model.to_string())
         }
         #[cfg(not(target_os = "ios"))]
@@ -55,15 +62,22 @@ impl DeviceInfo for IosDeviceInfo {
     }
 
     fn device_form(&self) -> DeviceForm {
-        // iOS 使用 UIDevice.userInterfaceIdiom 判断设备类型
         #[cfg(target_os = "ios")]
         {
-            use objc2_ui_kit::UIDevice;
-            let device = unsafe { UIDevice::currentDevice() };
-            let idiom = unsafe { device.userInterfaceIdiom() };
+            use objc2::MainThreadMarker;
+            use objc2_ui_kit::{UIDevice, UIUserInterfaceIdiom};
+
+            let mtm = match MainThreadMarker::new() {
+                Some(mtm) => mtm,
+                None => return DeviceForm::Unknown,
+            };
+            let device = UIDevice::currentDevice(mtm);
+            let idiom = device.userInterfaceIdiom();
             match idiom {
-                0 => DeviceForm::Phone,  // UIUserInterfaceIdiomPhone
-                1 => DeviceForm::Tablet, // UIUserInterfaceIdiomPad
+                UIUserInterfaceIdiom::Phone => DeviceForm::Phone,
+                UIUserInterfaceIdiom::Pad => DeviceForm::Tablet,
+                UIUserInterfaceIdiom::TV => DeviceForm::Tv,
+                UIUserInterfaceIdiom::CarPlay => DeviceForm::Car,
                 _ => DeviceForm::Unknown,
             }
         }

@@ -38,7 +38,7 @@ impl DeviceInfo for WindowsDeviceInfo {
 
             let mut hkey = Default::default();
             let result =
-                unsafe { RegOpenKeyExW(HKEY_LOCAL_MACHINE, &subkey, 0, KEY_READ, &mut hkey) };
+                unsafe { RegOpenKeyExW(HKEY_LOCAL_MACHINE, &subkey, None, KEY_READ, &mut hkey) };
 
             if result.is_err() {
                 return Err(PlatformError::FfiError(

@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{PlatformError, Result};
 use crate::traits::ScreenProvider;
 use crate::types::{Orientation, ScreenInfo};
 
@@ -8,37 +8,33 @@ impl ScreenProvider for IosScreenProvider {
     fn screen_info(&self) -> Result<ScreenInfo> {
         #[cfg(target_os = "ios")]
         {
-            use objc2_ui_kit::{UIApplication, UIDevice, UIScreen};
+            use objc2::MainThreadMarker;
+            use objc2_ui_kit::{UIDevice, UIScreen, UIUserInterfaceIdiom};
 
-            let screen = unsafe { UIScreen::mainScreen() };
-            let bounds = unsafe { screen.bounds() };
-            let scale = unsafe { screen.scale() };
+            let mtm = MainThreadMarker::new()
+                .ok_or_else(|| PlatformError::FfiError("Not on main thread".to_string()))?;
+
+            let screen = UIScreen::mainScreen(mtm);
+            let bounds = screen.bounds();
+            let scale = screen.scale();
 
             let width = bounds.size.width as u32;
             let height = bounds.size.height as u32;
 
-            // 获取屏幕方向
-            let orientation = unsafe {
-                let app = UIApplication::sharedApplication();
-                let status_bar_orientation = app.statusBarOrientation();
-                match status_bar_orientation {
-                    1 => Orientation::Portrait,  // UIInterfaceOrientationPortrait
-                    2 => Orientation::Portrait,  // UIInterfaceOrientationPortraitUpsideDown
-                    3 => Orientation::Landscape, // UIInterfaceOrientationLandscapeLeft
-                    4 => Orientation::Landscape, // UIInterfaceOrientationLandscapeRight
-                    _ => Orientation::Unknown,
-                }
+            // 根据 screen bounds 判断方向（iOS 13+ statusBarOrientation 已废弃）
+            let orientation = if width >= height {
+                Orientation::Landscape
+            } else {
+                Orientation::Portrait
             };
 
             // 根据 userInterfaceIdiom 区分设备类型使用不同基准 PPI
-            let base_ppi = unsafe {
-                let device = UIDevice::currentDevice();
-                let idiom = device.userInterfaceIdiom();
-                match idiom {
-                    0 => 163.0, // UIUserInterfaceIdiomPhone
-                    1 => 132.0, // UIUserInterfaceIdiomPad
-                    _ => 163.0, // 默认使用 iPhone 基准值
-                }
+            let device = UIDevice::currentDevice(mtm);
+            let idiom = device.userInterfaceIdiom();
+            let base_ppi = match idiom {
+                UIUserInterfaceIdiom::Phone => 163.0,
+                UIUserInterfaceIdiom::Pad => 132.0,
+                _ => 163.0,
             };
 
             Ok(ScreenInfo {
@@ -51,7 +47,7 @@ impl ScreenProvider for IosScreenProvider {
         }
         #[cfg(not(target_os = "ios"))]
         {
-            Err(crate::error::PlatformError::NotSupported)
+            Err(PlatformError::NotSupported)
         }
     }
 

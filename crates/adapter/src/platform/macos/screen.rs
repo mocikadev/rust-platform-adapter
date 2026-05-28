@@ -14,10 +14,10 @@ impl ScreenProvider for MacosScreenProvider {
             let mtm = MainThreadMarker::new()
                 .ok_or_else(|| PlatformError::FfiError("Not on main thread".to_string()))?;
 
-            let screen = unsafe { NSScreen::mainScreen(mtm) }
+            let screen = NSScreen::mainScreen(mtm)
                 .ok_or_else(|| PlatformError::FfiError("No main screen".to_string()))?;
-            let frame = unsafe { screen.frame() };
-            let backing_scale = unsafe { screen.backingScaleFactor() };
+            let frame = screen.frame();
+            let backing_scale = screen.backingScaleFactor();
 
             // NSScreen.frame 返回的点坐标（逻辑像素）
             // 乘以 backingScaleFactor 得到物理像素
