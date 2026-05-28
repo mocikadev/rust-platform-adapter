@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{PlatformError, Result};
 use crate::traits::DeviceInfo;
 use crate::types::{CpuArch, DeviceForm, OsType, PlatformInfo, CURRENT_ARCH};
 
@@ -29,7 +29,8 @@ impl DeviceInfo for WindowsDeviceInfo {
         {
             use windows::core::HSTRING;
             use windows::Win32::System::Registry::{
-                RegGetValueW, RegOpenKeyExW, HKEY_LOCAL_MACHINE, KEY_READ, RRF_RT_REG_SZ,
+                RegCloseKey, RegGetValueW, RegOpenKeyExW, HKEY_LOCAL_MACHINE, KEY_READ,
+                RRF_RT_REG_SZ,
             };
 
             let subkey = HSTRING::from(r"HARDWARE\DESCRIPTION\System\BIOS");
@@ -40,7 +41,7 @@ impl DeviceInfo for WindowsDeviceInfo {
                 unsafe { RegOpenKeyExW(HKEY_LOCAL_MACHINE, &subkey, 0, KEY_READ, &mut hkey) };
 
             if result.is_err() {
-                return Err(crate::error::PlatformError::FfiError(
+                return Err(PlatformError::FfiError(
                     "Failed to open registry key for device model".to_string(),
                 ));
             }
@@ -60,8 +61,10 @@ impl DeviceInfo for WindowsDeviceInfo {
                 )
             };
 
+            let _ = unsafe { RegCloseKey(hkey) };
+
             if result.is_err() {
-                return Err(crate::error::PlatformError::FfiError(
+                return Err(PlatformError::FfiError(
                     "Failed to read SystemProductName from registry".to_string(),
                 ));
             }
@@ -71,10 +74,9 @@ impl DeviceInfo for WindowsDeviceInfo {
             let model = model.trim().to_string();
 
             if model.is_empty() {
-                // Fallback 到主机名
                 use sysinfo::System;
                 return System::host_name().ok_or_else(|| {
-                    crate::error::PlatformError::FfiError("Failed to get device model".to_string())
+                    PlatformError::FfiError("Failed to get device model".to_string())
                 });
             }
 
@@ -82,7 +84,7 @@ impl DeviceInfo for WindowsDeviceInfo {
         }
         #[cfg(not(target_os = "windows"))]
         {
-            Err(crate::error::PlatformError::NotSupported)
+            Err(PlatformError::NotSupported)
         }
     }
 

@@ -14,30 +14,33 @@ impl ScreenProvider for WindowsScreenProvider {
             };
 
             unsafe {
-                let width = GetSystemMetrics(SM_CXSCREEN).ok_or_else(|| {
-                    PlatformError::FfiError("GetSystemMetrics(SM_CXSCREEN) failed".to_string())
-                })? as u32;
-                let height = GetSystemMetrics(SM_CYSCREEN).ok_or_else(|| {
-                    PlatformError::FfiError("GetSystemMetrics(SM_CYSCREEN) failed".to_string())
-                })? as u32;
+                let width = GetSystemMetrics(SM_CXSCREEN);
+                let height = GetSystemMetrics(SM_CYSCREEN);
+
+                if width <= 0 || height <= 0 {
+                    return Err(PlatformError::FfiError(
+                        "GetSystemMetrics returned invalid screen dimensions".to_string(),
+                    ));
+                }
 
                 let hdc = GetDC(None);
-                let dpi = match hdc {
-                    Some(hdc) => GetDeviceCaps(hdc, LOGPIXELSX) as f32,
-                    None => 96.0,
+                let dpi = if hdc.is_invalid() {
+                    96.0
+                } else {
+                    GetDeviceCaps(hdc, LOGPIXELSX) as f32
                 };
 
                 let scale_factor = dpi / 96.0;
 
-                let orientation = if width >= height {
+                let orientation = if width as u32 >= height as u32 {
                     Orientation::Landscape
                 } else {
                     Orientation::Portrait
                 };
 
                 Ok(ScreenInfo {
-                    width,
-                    height,
+                    width: width as u32,
+                    height: height as u32,
                     dpi,
                     scale_factor,
                     orientation,

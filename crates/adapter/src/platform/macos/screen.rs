@@ -8,7 +8,7 @@ impl ScreenProvider for MacosScreenProvider {
     fn screen_info(&self) -> Result<ScreenInfo> {
         #[cfg(target_os = "macos")]
         {
-            use objc2::main_thread_marker::MainThreadMarker;
+            use objc2::MainThreadMarker;
             use objc2_app_kit::NSScreen;
 
             let mtm = MainThreadMarker::new()
