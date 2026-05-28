@@ -1,4 +1,5 @@
 mod device;
+pub mod ffi;
 mod path;
 mod screen;
 

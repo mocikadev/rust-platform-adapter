@@ -1,5 +1,5 @@
 /// 操作系统类型
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OsType {
     Android,
     Ios,
@@ -83,7 +83,7 @@ impl OsType {
 }
 
 /// 设备形态类型
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DeviceForm {
     Phone,
     Tablet,
@@ -131,12 +131,14 @@ impl DeviceForm {
 }
 
 /// CPU 架构
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CpuArch {
     X86,
     X86_64,
     Arm,
     Arm64,
+    RiscV32,
+    RiscV64,
     Unknown,
 }
 
@@ -159,11 +161,21 @@ impl CpuArch {
         {
             CpuArch::Arm64
         }
+        #[cfg(target_arch = "riscv32")]
+        {
+            CpuArch::RiscV32
+        }
+        #[cfg(target_arch = "riscv64")]
+        {
+            CpuArch::RiscV64
+        }
         #[cfg(not(any(
             target_arch = "x86",
             target_arch = "x86_64",
             target_arch = "arm",
-            target_arch = "aarch64"
+            target_arch = "aarch64",
+            target_arch = "riscv32",
+            target_arch = "riscv64"
         )))]
         {
             CpuArch::Unknown
@@ -172,7 +184,7 @@ impl CpuArch {
 }
 
 /// 平台信息
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PlatformInfo {
     pub os_type: OsType,
     pub os_version: String,
@@ -190,7 +202,7 @@ pub enum Orientation {
 }
 
 /// 屏幕信息
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ScreenInfo {
     pub width: u32,
     pub height: u32,
@@ -204,3 +216,129 @@ pub const CURRENT_OS: OsType = OsType::current();
 
 /// 编译时常量：当前 CPU 架构
 pub const CURRENT_ARCH: CpuArch = CpuArch::current();
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_os_type_equality() {
+        assert_eq!(OsType::Linux, OsType::Linux);
+        assert_ne!(OsType::Linux, OsType::Windows);
+    }
+
+    #[test]
+    fn test_os_type_hash() {
+        use std::collections::HashSet;
+        let set: HashSet<OsType> = [OsType::Linux, OsType::Windows, OsType::Linux].into();
+        assert_eq!(set.len(), 2);
+    }
+
+    #[test]
+    fn test_os_type_is_methods() {
+        assert!(OsType::Android.is_android());
+        assert!(OsType::Android.is_mobile());
+        assert!(!OsType::Android.is_desktop());
+
+        assert!(OsType::Linux.is_linux());
+        assert!(OsType::Linux.is_desktop());
+        assert!(!OsType::Linux.is_mobile());
+
+        assert!(!OsType::Ohos.is_mobile());
+        assert!(!OsType::Ohos.is_desktop());
+    }
+
+    #[test]
+    fn test_device_form_is_methods() {
+        assert!(DeviceForm::Phone.is_phone());
+        assert!(DeviceForm::Phone.is_mobile());
+        assert!(!DeviceForm::Phone.is_desktop());
+
+        assert!(DeviceForm::Tablet.is_tablet());
+        assert!(DeviceForm::Tablet.is_mobile());
+
+        assert!(DeviceForm::Desktop.is_desktop());
+        assert!(!DeviceForm::Desktop.is_mobile());
+
+        assert!(DeviceForm::Tv.is_tv());
+        assert!(DeviceForm::Car.is_car());
+        assert!(DeviceForm::Wearable.is_wearable());
+        assert!(DeviceForm::IoT.is_iot());
+    }
+
+    #[test]
+    fn test_device_form_hash() {
+        use std::collections::HashSet;
+        let set: HashSet<DeviceForm> =
+            [DeviceForm::Phone, DeviceForm::Desktop, DeviceForm::Phone].into();
+        assert_eq!(set.len(), 2);
+    }
+
+    #[test]
+    fn test_cpu_arch_values() {
+        assert_ne!(CpuArch::X86, CpuArch::X86_64);
+        assert_ne!(CpuArch::Arm, CpuArch::Arm64);
+        assert_ne!(CpuArch::RiscV32, CpuArch::RiscV64);
+    }
+
+    #[test]
+    fn test_cpu_arch_current() {
+        // 在当前编译环境下应该返回有效架构
+        let arch = CpuArch::current();
+        assert_ne!(arch, CpuArch::Unknown);
+    }
+
+    #[test]
+    fn test_orientation_values() {
+        assert_ne!(Orientation::Portrait, Orientation::Landscape);
+        assert_ne!(Orientation::Landscape, Orientation::Unknown);
+    }
+
+    #[test]
+    fn test_screen_info_partial_eq() {
+        let a = ScreenInfo {
+            width: 1920,
+            height: 1080,
+            dpi: 96.0,
+            scale_factor: 1.0,
+            orientation: Orientation::Landscape,
+        };
+        let b = ScreenInfo {
+            width: 1920,
+            height: 1080,
+            dpi: 96.0,
+            scale_factor: 1.0,
+            orientation: Orientation::Landscape,
+        };
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_platform_info_partial_eq() {
+        let a = PlatformInfo {
+            os_type: OsType::Linux,
+            os_version: "1.0".to_string(),
+            device_model: "Test".to_string(),
+            cpu_arch: CpuArch::X86_64,
+            device_form: DeviceForm::Desktop,
+        };
+        let b = PlatformInfo {
+            os_type: OsType::Linux,
+            os_version: "1.0".to_string(),
+            device_model: "Test".to_string(),
+            cpu_arch: CpuArch::X86_64,
+            device_form: DeviceForm::Desktop,
+        };
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_current_os_constant() {
+        assert_eq!(CURRENT_OS, OsType::current());
+    }
+
+    #[test]
+    fn test_current_arch_constant() {
+        assert_eq!(CURRENT_ARCH, CpuArch::current());
+    }
+}

@@ -55,6 +55,4 @@ default = ["x11"]
 x11 = ["dep:x11rb"]
 
 # OpenHarmony
-[target.'cfg(target_os = "ohos")'.dependencies]
-napi-ohos = "1.2.0"
-napi-derive-ohos = "1.2.0"
+# 使用 extern "C" FFI 直接调用 NDK C API，无需 napi-ohos 框架

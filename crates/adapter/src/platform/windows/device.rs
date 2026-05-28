@@ -37,6 +37,9 @@ impl DeviceInfo for WindowsDeviceInfo {
             let value_name = HSTRING::from("SystemProductName");
 
             let mut hkey = Default::default();
+            // Safety: RegOpenKeyExW 是 Windows Registry API，参数均为合法值：
+            // HKEY_LOCAL_MACHINE 是预定义根键，subkey 是有效的 HSTRING，
+            // KEY_READ 为只读权限请求，hkey 是有效的输出指针
             let result =
                 unsafe { RegOpenKeyExW(HKEY_LOCAL_MACHINE, &subkey, None, KEY_READ, &mut hkey) };
 
@@ -49,6 +52,9 @@ impl DeviceInfo for WindowsDeviceInfo {
             let mut buf_size: u32 = 512;
             let mut buf = vec![0u16; 256];
 
+            // Safety: RegGetValueW 是 Windows Registry API，hkey 已通过 RegOpenKeyExW 验证，
+            // RRF_RT_REG_SZ 限制只读取 REG_SZ 类型值，buf 大小为 512 字节（256 * 2）足够容纳注册表字符串值，
+            // buf_size 传入实际缓冲区大小，函数不会越界写入
             let result = unsafe {
                 RegGetValueW(
                     hkey,
@@ -61,6 +67,8 @@ impl DeviceInfo for WindowsDeviceInfo {
                 )
             };
 
+            // Safety: RegCloseKey 是 Windows Registry API，hkey 是 RegOpenKeyExW 返回的有效句柄，
+            // 关闭操作不会影响其他线程，调用后不再使用该句柄
             let _ = unsafe { RegCloseKey(hkey) };
 
             if result.is_err() {
@@ -74,10 +82,9 @@ impl DeviceInfo for WindowsDeviceInfo {
             let model = model.trim().to_string();
 
             if model.is_empty() {
-                use sysinfo::System;
-                return System::host_name().ok_or_else(|| {
-                    PlatformError::FfiError("Failed to get device model".to_string())
-                });
+                return Err(PlatformError::FfiError(
+                    "Registry value SystemProductName is empty".to_string(),
+                ));
             }
 
             Ok(model)

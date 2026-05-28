@@ -242,3 +242,23 @@ fn test_external_cache_dir() {
         "external_cache_dir should be absolute path"
     );
 }
+
+#[test]
+fn test_device_form_convenience_functions() {
+    // 验证新增的便捷函数可调用
+    let form = current_device_form();
+    match form {
+        DeviceForm::Phone
+        | DeviceForm::Tablet
+        | DeviceForm::Desktop
+        | DeviceForm::Tv
+        | DeviceForm::Car
+        | DeviceForm::Wearable
+        | DeviceForm::IoT
+        | DeviceForm::Unknown => {}
+    }
+    // is_phone / is_tablet / is_desktop_device 应返回布尔值
+    let _ = is_phone();
+    let _ = is_tablet();
+    let _ = is_desktop_device();
+}

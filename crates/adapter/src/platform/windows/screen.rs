@@ -13,6 +13,9 @@ impl ScreenProvider for WindowsScreenProvider {
                 GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN,
             };
 
+            // Safety: GetSystemMetrics/GetDC/GetDeviceCaps/ReleaseDC 均为 Win32 线程安全 API，
+            // SM_CXSCREEN/SM_CYSCREEN 是合法常量，GetDC(None) 获取整个屏幕 DC，
+            // GetDeviceCaps 读取 DPI 信息为只读操作，ReleaseDC 在使用后正确释放 DC 资源
             unsafe {
                 let width = GetSystemMetrics(SM_CXSCREEN);
                 let height = GetSystemMetrics(SM_CYSCREEN);

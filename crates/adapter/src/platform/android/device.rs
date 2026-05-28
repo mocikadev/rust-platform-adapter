@@ -33,6 +33,9 @@ impl DeviceInfo for AndroidDeviceInfo {
             }
 
             let mut buf = [0u8; 256];
+            // Safety: __system_property_get 和 android_get_device_api_level 是 Android libc 提供的线程安全函数，
+            // name 指针指向以 null 结尾的合法字节串，buf 大小为 256 字节，足以容纳属性值（最大 PROP_VALUE_MAX=92），
+            // android_get_device_api_level 无参数且返回整数，无内存安全风险
             unsafe {
                 let len = __system_property_get(
                     b"ro.build.version.release\0".as_ptr() as *const std::ffi::c_char,
@@ -64,6 +67,8 @@ impl DeviceInfo for AndroidDeviceInfo {
             }
 
             let mut buf = [0u8; 256];
+            // Safety: __system_property_get 是 Android libc 提供的线程安全函数，
+            // name 指针指向以 null 结尾的合法字节串，buf 大小为 256 字节，足以容纳属性值
             unsafe {
                 let len = __system_property_get(
                     b"ro.product.model\0".as_ptr() as *const _,

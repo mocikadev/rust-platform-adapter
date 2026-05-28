@@ -9,7 +9,7 @@ impl ScreenProvider for IosScreenProvider {
         #[cfg(target_os = "ios")]
         {
             use objc2::MainThreadMarker;
-            use objc2_ui_kit::{UIDevice, UIScreen, UIUserInterfaceIdiom};
+            use objc2_ui_kit::{UIDevice, UIDeviceOrientation, UIScreen, UIUserInterfaceIdiom};
 
             let mtm = MainThreadMarker::new()
                 .ok_or_else(|| PlatformError::FfiError("Not on main thread".to_string()))?;
@@ -18,18 +18,31 @@ impl ScreenProvider for IosScreenProvider {
             let bounds = screen.bounds();
             let scale = screen.scale();
 
-            let width = bounds.size.width as u32;
-            let height = bounds.size.height as u32;
+            // bounds.size 返回的是逻辑点(points)，必须乘以 scale 得到物理像素
+            let width = (bounds.size.width * scale) as u32;
+            let height = (bounds.size.height * scale) as u32;
 
-            // 根据 screen bounds 判断方向（iOS 13+ statusBarOrientation 已废弃）
-            let orientation = if width >= height {
-                Orientation::Landscape
-            } else {
-                Orientation::Portrait
+            // 使用 UIDevice.orientation 获取设备物理方向
+            // 注意：UIScreen.bounds 始终返回固定值，不随旋转变化
+            let device = UIDevice::currentDevice(mtm);
+            let orientation = match device.orientation() {
+                UIDeviceOrientation::Portrait | UIDeviceOrientation::PortraitUpsideDown => {
+                    Orientation::Portrait
+                }
+                UIDeviceOrientation::LandscapeLeft | UIDeviceOrientation::LandscapeRight => {
+                    Orientation::Landscape
+                }
+                // FaceUp/FaceDown/Unknown 时回退到 bounds 尺寸推断
+                _ => {
+                    if width >= height {
+                        Orientation::Landscape
+                    } else {
+                        Orientation::Portrait
+                    }
+                }
             };
 
             // 根据 userInterfaceIdiom 区分设备类型使用不同基准 PPI
-            let device = UIDevice::currentDevice(mtm);
             let idiom = device.userInterfaceIdiom();
             let base_ppi = match idiom {
                 UIUserInterfaceIdiom::Phone => 163.0,

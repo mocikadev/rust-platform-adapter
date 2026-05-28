@@ -2,6 +2,8 @@ use crate::error::Result;
 use crate::traits::DeviceInfo;
 use crate::types::{CpuArch, DeviceForm, OsType, PlatformInfo, CURRENT_ARCH};
 
+use super::ffi::*;
+
 pub struct OhosDeviceInfo;
 
 impl DeviceInfo for OhosDeviceInfo {
@@ -24,10 +26,8 @@ impl DeviceInfo for OhosDeviceInfo {
         // OH_GetOSFullName() 获取 OS 完整版本
         #[cfg(target_os = "ohos")]
         {
-            // 声明外部 C 函数 (来自 libdeviceinfo_ndk.z.so)
-            extern "C" {
-                fn OH_GetOSFullName() -> *const std::ffi::c_char;
-            }
+            // Safety: OH_GetOSFullName 是 OpenHarmony deviceinfo NDK 提供的线程安全函数，
+            // 返回指向静态字符串的指针，调用者不需要释放，使用前检查非 null
             unsafe {
                 let ptr = OH_GetOSFullName();
                 if !ptr.is_null() {
@@ -50,9 +50,8 @@ impl DeviceInfo for OhosDeviceInfo {
         // OH_GetProductModel() 获取产品型号
         #[cfg(target_os = "ohos")]
         {
-            extern "C" {
-                fn OH_GetProductModel() -> *const std::ffi::c_char;
-            }
+            // Safety: OH_GetProductModel 是 OpenHarmony deviceinfo NDK 提供的线程安全函数，
+            // 返回指向静态字符串的指针，调用者不需要释放，使用前检查非 null
             unsafe {
                 let ptr = OH_GetProductModel();
                 if !ptr.is_null() {
@@ -81,9 +80,8 @@ impl DeviceInfo for OhosDeviceInfo {
         //         "wearable"/"liteWearable"(穿戴), "car"(车载), "smartVision"(视觉)
         #[cfg(target_os = "ohos")]
         {
-            extern "C" {
-                fn OH_GetDeviceType() -> *const std::ffi::c_char;
-            }
+            // Safety: OH_GetDeviceType 是 OpenHarmony deviceinfo NDK 提供的线程安全函数，
+            // 返回指向静态字符串的指针，调用者不需要释放，使用前检查非 null
             unsafe {
                 let ptr = OH_GetDeviceType();
                 if !ptr.is_null() {

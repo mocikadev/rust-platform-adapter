@@ -70,6 +70,26 @@ pub fn device_form() -> DeviceForm {
     crate::platform::device_provider().device_form()
 }
 
+/// 获取当前设备形态（与 device_form 相同，语义更明确）
+pub fn current_device_form() -> DeviceForm {
+    device_form()
+}
+
+/// 是否为手机
+pub fn is_phone() -> bool {
+    device_form().is_phone()
+}
+
+/// 是否为平板
+pub fn is_tablet() -> bool {
+    device_form().is_tablet()
+}
+
+/// 是否为桌面设备
+pub fn is_desktop_device() -> bool {
+    device_form().is_desktop()
+}
+
 // ========== 路径相关 ==========
 
 /// 获取应用数据目录

@@ -1,5 +1,3 @@
-use sysinfo::System;
-
 use crate::error::Result;
 use crate::traits::DeviceInfo;
 use crate::types::{CpuArch, DeviceForm, OsType, PlatformInfo, CURRENT_ARCH};
@@ -22,19 +20,21 @@ impl DeviceInfo for LinuxDeviceInfo {
     }
 
     fn os_version(&self) -> Result<String> {
+        use sysinfo::System;
         Ok(System::os_version().unwrap_or_else(|| "Unknown".to_string()))
     }
 
     fn device_model(&self) -> Result<String> {
         // 尝试读取 /sys/class/dmi/id/product_name
+        // 失败时返回错误，不回退到 hostname（hostname 是网络标识，不是设备型号）
         std::fs::read_to_string("/sys/class/dmi/id/product_name")
             .map(|s| s.trim().to_string())
-            .or_else(|_| {
-                // fallback 到主机名
-                System::host_name()
-                    .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "hostname"))
+            .map_err(|e| {
+                crate::error::PlatformError::FfiError(format!(
+                    "Failed to read device model from DMI: {}",
+                    e
+                ))
             })
-            .map_err(crate::error::PlatformError::IoError)
     }
 
     fn cpu_arch(&self) -> CpuArch {

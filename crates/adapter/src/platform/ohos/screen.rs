@@ -2,6 +2,8 @@ use crate::error::Result;
 use crate::traits::ScreenProvider;
 use crate::types::{Orientation, ScreenInfo};
 
+use super::ffi::*;
+
 pub struct OhosScreenProvider;
 
 impl ScreenProvider for OhosScreenProvider {
@@ -9,37 +11,15 @@ impl ScreenProvider for OhosScreenProvider {
         // OpenHarmony NDK C API (oh_display_manager.h)
         #[cfg(target_os = "ohos")]
         {
-            type NativeDisplayManager_ErrorCode = i32;
-            const DISPLAY_MANAGER_OK: i32 = 0;
-
-            // NativeDisplayManager_Orientation 枚举
-            const DISPLAY_MANAGER_PORTRAIT: i32 = 0;
-            const DISPLAY_MANAGER_LANDSCAPE: i32 = 1;
-
-            extern "C" {
-                fn OH_NativeDisplayManager_GetDefaultDisplayWidth(
-                    width: *mut i32,
-                ) -> NativeDisplayManager_ErrorCode;
-                fn OH_NativeDisplayManager_GetDefaultDisplayHeight(
-                    height: *mut i32,
-                ) -> NativeDisplayManager_ErrorCode;
-                fn OH_NativeDisplayManager_GetDefaultDisplayDensityDpi(
-                    dpi: *mut i32,
-                ) -> NativeDisplayManager_ErrorCode;
-                fn OH_NativeDisplayManager_GetDefaultDisplayVirtualPixelRatio(
-                    vpr: *mut f32,
-                ) -> NativeDisplayManager_ErrorCode;
-                fn OH_NativeDisplayManager_GetDefaultDisplayOrientation(
-                    orientation: *mut i32,
-                ) -> NativeDisplayManager_ErrorCode;
-            }
-
             let mut width: i32 = 0;
             let mut height: i32 = 0;
             let mut dpi: i32 = 0;
             let mut vpr: f32 = 1.0;
             let mut orientation: i32 = 0;
 
+            // Safety: OH_NativeDisplayManager_* 系列函数是 OpenHarmony DisplayManager NDK 提供的线程安全函数，
+            // 所有输出参数均为栈上合法变量的可变引用，函数仅写入对应类型的值，
+            // 不会越界访问或修改其他内存
             unsafe {
                 let r1 = OH_NativeDisplayManager_GetDefaultDisplayWidth(&mut width);
                 let r2 = OH_NativeDisplayManager_GetDefaultDisplayHeight(&mut height);
