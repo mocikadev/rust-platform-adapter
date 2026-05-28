@@ -6,6 +6,65 @@ use crate::types::{
     CpuArch, DeviceForm, Orientation, OsType, PlatformInfo, ScreenInfo, CURRENT_OS,
 };
 
+// ========== 条件编译宏 ==========
+
+/// 编译时平台条件编译宏
+///
+/// 提供比 `#[cfg(target_os = "...")]` 更简洁的语法糖，
+/// 编译期完成分发，零运行时开销。
+///
+/// # 支持的平台标识
+///
+/// 单平台：`android` / `ios` / `ohos` / `windows` / `linux` / `macos`
+/// 分组：`mobile`（android + ios + ohos）/ `desktop`（windows + linux + macos）
+///
+/// # 示例
+///
+/// ```ignore
+/// platform!(android => {
+///     println!("Running on Android!");
+/// });
+///
+/// platform!(mobile => {
+///     // 移动平台特有逻辑
+/// });
+/// ```
+#[macro_export]
+macro_rules! platform {
+    (android => $block:block) => {
+        #[cfg(target_os = "android")]
+        $block
+    };
+    (ios => $block:block) => {
+        #[cfg(target_os = "ios")]
+        $block
+    };
+    (ohos => $block:block) => {
+        #[cfg(target_os = "ohos")]
+        $block
+    };
+    (windows => $block:block) => {
+        #[cfg(target_os = "windows")]
+        $block
+    };
+    (linux => $block:block) => {
+        #[cfg(target_os = "linux")]
+        $block
+    };
+    (macos => $block:block) => {
+        #[cfg(target_os = "macos")]
+        $block
+    };
+    (mobile => $block:block) => {
+        #[cfg(any(target_os = "android", target_os = "ios", target_os = "ohos"))]
+        $block
+    };
+    (desktop => $block:block) => {
+        #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
+        $block
+    };
+}
+
 // ========== 系统类型判断（编译时常量） ==========
 
 /// 获取当前操作系统类型（编译时确定）
@@ -147,4 +206,69 @@ pub fn scale_factor() -> Result<f32> {
 /// 获取屏幕方向
 pub fn orientation() -> Result<Orientation> {
     crate::platform::screen_provider().orientation()
+}
+
+// ========== 异步接口 ==========
+
+/// 异步获取平台信息
+pub async fn platform_info_async() -> Result<PlatformInfo> {
+    crate::platform::device_provider()
+        .platform_info_async()
+        .await
+}
+
+/// 异步获取操作系统版本
+pub async fn os_version_async() -> Result<String> {
+    crate::platform::device_provider().os_version_async().await
+}
+
+/// 异步获取设备型号
+pub async fn device_model_async() -> Result<String> {
+    crate::platform::device_provider()
+        .device_model_async()
+        .await
+}
+
+/// 异步获取应用数据目录
+pub async fn data_dir_async() -> Result<PathBuf> {
+    crate::platform::path_provider().data_dir_async().await
+}
+
+/// 异步获取缓存目录
+pub async fn cache_dir_async() -> Result<PathBuf> {
+    crate::platform::path_provider().cache_dir_async().await
+}
+
+/// 异步获取临时目录
+pub async fn temp_dir_async() -> Result<PathBuf> {
+    crate::platform::path_provider().temp_dir_async().await
+}
+
+/// 异步获取文档目录
+pub async fn document_dir_async() -> Result<PathBuf> {
+    crate::platform::path_provider().document_dir_async().await
+}
+
+/// 异步获取外部存储应用数据目录
+pub async fn external_data_dir_async() -> Result<PathBuf> {
+    crate::platform::path_provider()
+        .external_data_dir_async()
+        .await
+}
+
+/// 异步获取外部存储缓存目录
+pub async fn external_cache_dir_async() -> Result<PathBuf> {
+    crate::platform::path_provider()
+        .external_cache_dir_async()
+        .await
+}
+
+/// 异步获取屏幕信息
+pub async fn screen_info_async() -> Result<ScreenInfo> {
+    crate::platform::screen_provider().screen_info_async().await
+}
+
+/// 异步获取屏幕方向
+pub async fn orientation_async() -> Result<Orientation> {
+    crate::platform::screen_provider().orientation_async().await
 }

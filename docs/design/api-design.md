@@ -177,13 +177,13 @@ pub struct PlatformInfo {
 }
 
 /// 屏幕信息
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ScreenInfo {
     pub width: u32,
     pub height: u32,
     pub dpi: f32,
-    pub orientation: Orientation,
     pub scale_factor: f32,
+    pub orientation: Orientation,
 }
 ```
 
@@ -256,7 +256,7 @@ pub trait PathProvider {
     /// 应用数据目录（持久化存储）
     ///
     /// - Android: /data/data/<pkg>/files
-    /// - iOS: ~/Documents
+    /// - iOS: ~/Library/Application Support
     /// - Windows: %APPDATA%\<pkg>
     /// - Linux: ~/.local/share/<pkg>
     /// - macOS: ~/Library/Application Support/<pkg>
@@ -281,6 +281,38 @@ pub trait PathProvider {
     /// - Windows: %USERPROFILE%\Documents
     /// - Linux/MacOS: ~/Documents
     fn document_dir(&self) -> Result<PathBuf>;
+
+    /// 应用数据目录（外部存储，持久化）
+    ///
+    /// - Android: /sdcard/Android/data/<pkg>/files
+    /// - 其他平台: 与 data_dir() 相同
+    fn external_data_dir(&self) -> Result<PathBuf>;
+
+    /// 缓存目录（外部存储，可清理）
+    ///
+    /// - Android: /sdcard/Android/data/<pkg>/cache
+    /// - 其他平台: 与 cache_dir() 相同
+    fn external_cache_dir(&self) -> Result<PathBuf>;
+
+    // ===== 异步接口 =====
+
+    /// 异步获取应用数据目录
+    fn data_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> { ... }
+
+    /// 异步获取缓存目录
+    fn cache_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> { ... }
+
+    /// 异步获取临时目录
+    fn temp_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> { ... }
+
+    /// 异步获取文档目录
+    fn document_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> { ... }
+
+    /// 异步获取外部存储应用数据目录
+    fn external_data_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> { ... }
+
+    /// 异步获取外部存储缓存目录
+    fn external_cache_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> { ... }
 }
 ```
 
@@ -306,6 +338,14 @@ pub trait ScreenProvider {
 
     /// 获取屏幕方向
     fn orientation(&self) -> Result<Orientation>;
+
+    // ===== 异步接口 =====
+
+    /// 异步获取屏幕信息
+    fn screen_info_async(&self) -> Pin<Box<dyn Future<Output = Result<ScreenInfo>> + Send + '_>> { ... }
+
+    /// 异步获取屏幕方向
+    fn orientation_async(&self) -> Pin<Box<dyn Future<Output = Result<Orientation>> + Send + '_>> { ... }
 }
 ```
 

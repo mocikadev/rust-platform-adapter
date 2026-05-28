@@ -104,11 +104,13 @@ pub struct PlatformInfo {
     pub device_form: DeviceForm,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct ScreenInfo {
     pub width: u32,
     pub height: u32,
     pub dpi: f32,
     pub scale_factor: f32,
+    pub orientation: Orientation,
 }
 ```
 

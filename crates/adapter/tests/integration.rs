@@ -1,5 +1,104 @@
 use rust_platform_adapter::prelude::*;
 
+// ========== Mock 实现 ==========
+
+/// Mock DeviceInfo 实现
+struct MockDevice;
+
+impl DeviceInfo for MockDevice {
+    fn platform_info(&self) -> Result<PlatformInfo> {
+        Ok(PlatformInfo {
+            os_type: OsType::Linux,
+            os_version: "1.0.0-mock".to_string(),
+            device_model: "MockDevice".to_string(),
+            cpu_arch: CpuArch::X86_64,
+            device_form: DeviceForm::Desktop,
+        })
+    }
+
+    fn os_type(&self) -> OsType {
+        OsType::Linux
+    }
+
+    fn os_version(&self) -> Result<String> {
+        Ok("1.0.0-mock".to_string())
+    }
+
+    fn device_model(&self) -> Result<String> {
+        Ok("MockDevice".to_string())
+    }
+
+    fn cpu_arch(&self) -> CpuArch {
+        CpuArch::X86_64
+    }
+
+    fn device_form(&self) -> DeviceForm {
+        DeviceForm::Desktop
+    }
+}
+
+/// Mock PathProvider 实现
+struct MockPath;
+
+impl PathProvider for MockPath {
+    fn data_dir(&self) -> Result<std::path::PathBuf> {
+        Ok(std::path::PathBuf::from("/mock/data"))
+    }
+
+    fn cache_dir(&self) -> Result<std::path::PathBuf> {
+        Ok(std::path::PathBuf::from("/mock/cache"))
+    }
+
+    fn temp_dir(&self) -> Result<std::path::PathBuf> {
+        Ok(std::path::PathBuf::from("/mock/temp"))
+    }
+
+    fn document_dir(&self) -> Result<std::path::PathBuf> {
+        Ok(std::path::PathBuf::from("/mock/documents"))
+    }
+
+    fn external_data_dir(&self) -> Result<std::path::PathBuf> {
+        Ok(std::path::PathBuf::from("/mock/external/data"))
+    }
+
+    fn external_cache_dir(&self) -> Result<std::path::PathBuf> {
+        Ok(std::path::PathBuf::from("/mock/external/cache"))
+    }
+}
+
+/// Mock ScreenProvider 实现
+struct MockScreen;
+
+impl ScreenProvider for MockScreen {
+    fn screen_info(&self) -> Result<ScreenInfo> {
+        Ok(ScreenInfo {
+            width: 1920,
+            height: 1080,
+            dpi: 96.0,
+            scale_factor: 1.0,
+            orientation: Orientation::Landscape,
+        })
+    }
+
+    fn screen_width(&self) -> Result<u32> {
+        Ok(1920)
+    }
+
+    fn screen_height(&self) -> Result<u32> {
+        Ok(1080)
+    }
+
+    fn scale_factor(&self) -> Result<f32> {
+        Ok(1.0)
+    }
+
+    fn orientation(&self) -> Result<Orientation> {
+        Ok(Orientation::Landscape)
+    }
+}
+
+// ========== 原有集成测试 ==========
+
 #[test]
 fn test_current_os() {
     let os = current_os();
@@ -261,4 +360,87 @@ fn test_device_form_convenience_functions() {
     let _ = is_phone();
     let _ = is_tablet();
     let _ = is_desktop_device();
+}
+
+// ========== Mock 实现测试 ==========
+
+#[test]
+fn test_mock_device_info() {
+    let device = MockDevice;
+    assert_eq!(device.os_type(), OsType::Linux);
+    assert_eq!(device.os_version().unwrap(), "1.0.0-mock");
+    assert_eq!(device.device_model().unwrap(), "MockDevice");
+    assert_eq!(device.cpu_arch(), CpuArch::X86_64);
+    assert_eq!(device.device_form(), DeviceForm::Desktop);
+
+    let info = device.platform_info().unwrap();
+    assert_eq!(info.os_type, OsType::Linux);
+    assert_eq!(info.os_version, "1.0.0-mock");
+    assert_eq!(info.device_model, "MockDevice");
+    assert_eq!(info.cpu_arch, CpuArch::X86_64);
+    assert_eq!(info.device_form, DeviceForm::Desktop);
+}
+
+#[test]
+fn test_mock_path_provider() {
+    let path = MockPath;
+    assert_eq!(
+        path.data_dir().unwrap(),
+        std::path::PathBuf::from("/mock/data")
+    );
+    assert_eq!(
+        path.cache_dir().unwrap(),
+        std::path::PathBuf::from("/mock/cache")
+    );
+    assert_eq!(
+        path.temp_dir().unwrap(),
+        std::path::PathBuf::from("/mock/temp")
+    );
+    assert_eq!(
+        path.document_dir().unwrap(),
+        std::path::PathBuf::from("/mock/documents")
+    );
+    assert_eq!(
+        path.external_data_dir().unwrap(),
+        std::path::PathBuf::from("/mock/external/data")
+    );
+    assert_eq!(
+        path.external_cache_dir().unwrap(),
+        std::path::PathBuf::from("/mock/external/cache")
+    );
+}
+
+#[test]
+fn test_mock_screen_provider() {
+    let screen = MockScreen;
+    assert_eq!(screen.screen_width().unwrap(), 1920);
+    assert_eq!(screen.screen_height().unwrap(), 1080);
+    assert_eq!(screen.scale_factor().unwrap(), 1.0);
+    assert_eq!(screen.orientation().unwrap(), Orientation::Landscape);
+
+    let info = screen.screen_info().unwrap();
+    assert_eq!(info.width, 1920);
+    assert_eq!(info.height, 1080);
+    assert_eq!(info.dpi, 96.0);
+    assert_eq!(info.scale_factor, 1.0);
+    assert_eq!(info.orientation, Orientation::Landscape);
+}
+
+#[test]
+fn test_mock_async_interfaces() {
+    let device = MockDevice;
+    let path = MockPath;
+    let screen = MockScreen;
+
+    // 验证异步接口可调用且返回正确结果
+    let rt = tokio::runtime::Runtime::new().unwrap();
+
+    let device_info = rt.block_on(device.platform_info_async()).unwrap();
+    assert_eq!(device_info.os_type, OsType::Linux);
+
+    let data = rt.block_on(path.data_dir_async()).unwrap();
+    assert_eq!(data, std::path::PathBuf::from("/mock/data"));
+
+    let screen_info = rt.block_on(screen.screen_info_async()).unwrap();
+    assert_eq!(screen_info.width, 1920);
 }

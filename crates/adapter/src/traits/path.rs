@@ -1,4 +1,6 @@
+use std::future::Future;
 use std::path::PathBuf;
+use std::pin::Pin;
 
 use crate::error::Result;
 
@@ -44,4 +46,40 @@ pub trait PathProvider {
     /// - Android: `/sdcard/Android/data/<pkg>/cache`
     /// - 其他平台: 与 `cache_dir()` 相同
     fn external_cache_dir(&self) -> Result<PathBuf>;
+
+    // ===== 异步接口 =====
+
+    /// 异步获取应用数据目录
+    fn data_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> {
+        Box::pin(std::future::ready(self.data_dir()))
+    }
+
+    /// 异步获取缓存目录
+    fn cache_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> {
+        Box::pin(std::future::ready(self.cache_dir()))
+    }
+
+    /// 异步获取临时目录
+    fn temp_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> {
+        Box::pin(std::future::ready(self.temp_dir()))
+    }
+
+    /// 异步获取文档目录
+    fn document_dir_async(&self) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> {
+        Box::pin(std::future::ready(self.document_dir()))
+    }
+
+    /// 异步获取外部存储应用数据目录
+    fn external_data_dir_async(
+        &self,
+    ) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> {
+        Box::pin(std::future::ready(self.external_data_dir()))
+    }
+
+    /// 异步获取外部存储缓存目录
+    fn external_cache_dir_async(
+        &self,
+    ) -> Pin<Box<dyn Future<Output = Result<PathBuf>> + Send + '_>> {
+        Box::pin(std::future::ready(self.external_cache_dir()))
+    }
 }
