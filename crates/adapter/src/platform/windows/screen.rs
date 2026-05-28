@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{PlatformError, Result};
 use crate::traits::ScreenProvider;
 use crate::types::{Orientation, ScreenInfo};
 
@@ -14,14 +14,17 @@ impl ScreenProvider for WindowsScreenProvider {
             };
 
             unsafe {
-                let width = GetSystemMetrics(SM_CXSCREEN) as u32;
-                let height = GetSystemMetrics(SM_CYSCREEN) as u32;
+                let width = GetSystemMetrics(SM_CXSCREEN).ok_or_else(|| {
+                    PlatformError::FfiError("GetSystemMetrics(SM_CXSCREEN) failed".to_string())
+                })? as u32;
+                let height = GetSystemMetrics(SM_CYSCREEN).ok_or_else(|| {
+                    PlatformError::FfiError("GetSystemMetrics(SM_CYSCREEN) failed".to_string())
+                })? as u32;
 
                 let hdc = GetDC(None);
-                let dpi = if hdc.is_invalid() {
-                    96.0 // 默认 DPI
-                } else {
-                    GetDeviceCaps(hdc, LOGPIXELSX) as f32
+                let dpi = match hdc {
+                    Some(hdc) => GetDeviceCaps(hdc, LOGPIXELSX) as f32,
+                    None => 96.0,
                 };
 
                 let scale_factor = dpi / 96.0;
@@ -43,7 +46,7 @@ impl ScreenProvider for WindowsScreenProvider {
         }
         #[cfg(not(target_os = "windows"))]
         {
-            Err(crate::error::PlatformError::NotSupported)
+            Err(PlatformError::NotSupported)
         }
     }
 

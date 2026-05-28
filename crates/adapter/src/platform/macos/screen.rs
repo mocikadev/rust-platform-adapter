@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{PlatformError, Result};
 use crate::traits::ScreenProvider;
 use crate::types::{Orientation, ScreenInfo};
 
@@ -8,9 +8,14 @@ impl ScreenProvider for MacosScreenProvider {
     fn screen_info(&self) -> Result<ScreenInfo> {
         #[cfg(target_os = "macos")]
         {
+            use objc2::main_thread_marker::MainThreadMarker;
             use objc2_app_kit::NSScreen;
 
-            let screen = unsafe { NSScreen::mainScreen() };
+            let mtm = MainThreadMarker::new()
+                .ok_or_else(|| PlatformError::FfiError("Not on main thread".to_string()))?;
+
+            let screen = unsafe { NSScreen::mainScreen(mtm) }
+                .ok_or_else(|| PlatformError::FfiError("No main screen".to_string()))?;
             let frame = unsafe { screen.frame() };
             let backing_scale = unsafe { screen.backingScaleFactor() };
 
@@ -23,7 +28,6 @@ impl ScreenProvider for MacosScreenProvider {
             // macOS 标准 DPI: 72.0 * backingScaleFactor
             let dpi = 72.0 * scale;
 
-            // macOS 默认横屏（桌面显示器）
             let orientation = if width >= height {
                 Orientation::Landscape
             } else {
@@ -40,7 +44,7 @@ impl ScreenProvider for MacosScreenProvider {
         }
         #[cfg(not(target_os = "macos"))]
         {
-            Err(crate::error::PlatformError::NotSupported)
+            Err(PlatformError::NotSupported)
         }
     }
 
